@@ -15,6 +15,7 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
   late stt.SpeechToText _speech;
   bool _isListening = false;
   String _text = '';
+  String _previousText = ''; // Store text before current session
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _contentController = TextEditingController();
   String _statusText = 'Tap on mic to start recording';
@@ -39,12 +40,13 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
         onStatus: (val) {
           print('onStatus: $val');
           if (val == 'done' || val == 'notListening') {
-            setState(() {
-              _isListening = false;
-              _statusText = 'Tap on mic to start recording';
-            });
-            if (_contentController.text.isNotEmpty) {
-              _showSaveDialog();
+            if (_isListening) {
+              // If user still wants to listen but system stopped it, restart!
+              _startListening();
+            } else {
+              setState(() {
+                _statusText = 'Tap on mic to start recording';
+              });
             }
           }
         },
@@ -53,16 +55,8 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
       if (available) {
         setState(() {
           _isListening = true;
-          _statusText = 'Recording...';
         });
-        _speech.listen(
-          onResult: (val) => setState(() {
-            _text = val.recognizedWords;
-            _contentController.text = _text;
-          }),
-          listenFor: const Duration(minutes: 5),
-          pauseFor: const Duration(seconds: 20),
-        );
+        _startListening();
       }
     } else {
       setState(() {
@@ -70,7 +64,30 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
         _statusText = 'Tap on mic to start recording';
       });
       _speech.stop();
+      // Show dialog ONLY on manual stop
+      if (_contentController.text.isNotEmpty) {
+        _showSaveDialog();
+      }
     }
+  }
+
+  void _startListening() {
+    setState(() {
+      _statusText = 'Recording...';
+      _previousText = _contentController.text; // Save existing text
+    });
+    _speech.listen(
+      pauseFor: const Duration(seconds: 30), // Wait longer before auto-stop
+      onResult: (val) => setState(() {
+        _text = val.recognizedWords;
+        // Append new speech to previous text
+        if (_previousText.isNotEmpty) {
+          _contentController.text = '$_previousText $_text';
+        } else {
+          _contentController.text = _text;
+        }
+      }),
+    );
   }
 
   void _showSaveDialog() {
@@ -101,6 +118,7 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                 // Delete/Discard
                 _contentController.clear();
                 _text = '';
+                _previousText = '';
                 Navigator.of(context).pop();
               },
               child: const Text('Delete', style: TextStyle(color: Colors.red)),
@@ -155,10 +173,7 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                 controller: _contentController,
                 maxLines: null,
                 expands: true,
-                readOnly:
-                    true, // Make it read-only so user relies on speech or dialog?
-                // User didn't specify read-only, but said "user can make notes using speech".
-                // I'll keep it editable just in case, but the flow is speech-centric.
+                readOnly: true,
                 decoration: const InputDecoration(
                   hintText: 'Speech output will appear here...',
                   border: OutlineInputBorder(),

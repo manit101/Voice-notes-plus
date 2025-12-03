@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'database_helper.dart';
 import 'note_model.dart';
 import 'add_note_screen.dart';
+import 'note_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -82,7 +83,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     onPressed: () => _deleteNote(note.id!),
                   ),
                   onTap: () {
-                    // Optional: Navigate to detail view
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => NoteDetailScreen(note: note),
+                      ),
+                    );
                   },
                 ),
               );
