@@ -51,4 +51,14 @@ class DatabaseHelper {
     Database db = await database;
     return await db.delete('notes', where: 'id = ?', whereArgs: [id]);
   }
+
+  Future<int> updateNote(Map<String, dynamic> note) async {
+    Database db = await database;
+    return await db.update(
+      'notes',
+      note,
+      where: 'id = ?',
+      whereArgs: [note['id']],
+    );
+  }
 }
