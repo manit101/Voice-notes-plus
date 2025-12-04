@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'main.dart';
-import 'database_helper.dart';
-import 'note_model.dart';
+import '../main.dart';
+import '../controllers/database_helper.dart';
+import '../models/note_model.dart';
 import 'add_note_screen.dart';
 import 'note_detail_screen.dart';
 
