@@ -66,6 +66,18 @@ class _HomeScreenState extends State<HomeScreen> {
     _refreshNotes();
   }
 
+  void _togglePin(Note note) async {
+    final updatedNote = Note(
+      id: note.id,
+      title: note.title,
+      content: note.content,
+      dateTime: note.dateTime,
+      isPinned: !note.isPinned,
+    );
+    await DatabaseHelper().updateNote(updatedNote.toMap());
+    _refreshNotes();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -124,12 +136,25 @@ class _HomeScreenState extends State<HomeScreen> {
                             margin: const EdgeInsets.symmetric(
                                 horizontal: 10, vertical: 5),
                             child: ListTile(
-                              title: Text(
-                                note.title.isNotEmpty
-                                    ? note.title
-                                    : 'Untitled Note',
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold),
+                              title: Row(
+                                children: [
+                                  if (note.isPinned)
+                                    const Padding(
+                                      padding: EdgeInsets.only(right: 8.0),
+                                      child: Icon(Icons.push_pin,
+                                          size: 16, color: Colors.orange),
+                                    ),
+                                  Expanded(
+                                    child: Text(
+                                      note.title.isNotEmpty
+                                          ? note.title
+                                          : 'Untitled Note',
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
                               ),
                               subtitle: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -150,6 +175,15 @@ class _HomeScreenState extends State<HomeScreen> {
                               trailing: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
+                                  IconButton(
+                                    icon: Icon(
+                                      note.isPinned
+                                          ? Icons.star
+                                          : Icons.star_border,
+                                      color: Colors.orange,
+                                    ),
+                                    onPressed: () => _togglePin(note),
+                                  ),
                                   IconButton(
                                     icon: const Icon(Icons.edit,
                                         color: Colors.blue),

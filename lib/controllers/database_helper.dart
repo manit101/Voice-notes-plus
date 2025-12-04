@@ -21,8 +21,9 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'voice_notes.db');
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
     );
   }
 
@@ -32,9 +33,17 @@ class DatabaseHelper {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT,
         content TEXT,
-        dateTime TEXT
+        dateTime TEXT,
+        isPinned INTEGER DEFAULT 0
       )
     ''');
+  }
+
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await db
+          .execute('ALTER TABLE notes ADD COLUMN isPinned INTEGER DEFAULT 0');
+    }
   }
 
   Future<int> insertNote(Map<String, dynamic> note) async {
@@ -44,7 +53,7 @@ class DatabaseHelper {
 
   Future<List<Map<String, dynamic>>> getNotes() async {
     Database db = await database;
-    return await db.query('notes', orderBy: 'dateTime DESC');
+    return await db.query('notes', orderBy: 'isPinned DESC, dateTime DESC');
   }
 
   Future<int> deleteNote(int id) async {
